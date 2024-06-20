@@ -1,5 +1,4 @@
 import React, { useState, useEffect, Fragment } from 'react';
-
 import Post from '../../components/Feed/Post/Post';
 import Button from '../../components/Button/Button';
 import FeedEdit from '../../components/Feed/FeedEdit/FeedEdit';
@@ -9,21 +8,33 @@ import Loader from '../../components/Loader/Loader';
 import ErrorHandler from '../../components/ErrorHandler/ErrorHandler';
 import './Feed.css';
 
-const Feed = () => {
+type PostData = {
+  _id: string;
+  title: string;
+  creator: {
+    name: string;
+  };
+  createdAt: string;
+  content: string;
+  imageUrl: string;
+};
+
+
+const Feed = (props) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [posts, setPosts] = useState([]);
+  const [posts, setPosts] = useState<PostData[]>([]);
   const [totalPosts, setTotalPosts] = useState(0);
-  const [editPost, setEditPost] = useState(null);
+  const [editPost, setEditPost] = useState<PostData | null>(null);
   const [status, setStatus] = useState('');
   const [postPage, setPostPage] = useState(1);
   const [postsLoading, setPostsLoading] = useState(true);
   const [editLoading, setEditLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
     fetch('URL')
       .then(res => {
-        if (res.status !== 200) {
+        if (!res.ok) {
           throw new Error('Failed to fetch user status.');
         }
         return res.json();
@@ -33,10 +44,10 @@ const Feed = () => {
       })
       .catch(catchError);
 
-    loadPosts();
+    loadPosts('');
   }, []);
 
-  const loadPosts = direction => {
+  const loadPosts = (direction: 'next' | 'previous' | '') => {
     if (direction) {
       setPostsLoading(true);
       setPosts([]);
@@ -46,13 +57,13 @@ const Feed = () => {
       page++;
       setPostPage(page);
     }
-    if (direction === 'previous') {
+    if (direction === 'previous' && postPage > 1) {
       page--;
       setPostPage(page);
     }
     fetch('URL')
       .then(res => {
-        if (res.status !== 200) {
+        if (!res.ok) {
           throw new Error('Failed to fetch posts.');
         }
         return res.json();
@@ -65,11 +76,17 @@ const Feed = () => {
       .catch(catchError);
   };
 
-  const statusUpdateHandler = event => {
+  const statusUpdateHandler = (event: React.FormEvent) => {
     event.preventDefault();
-    fetch('URL')
+    fetch('URL', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ status })
+    })
       .then(res => {
-        if (res.status !== 200 && res.status !== 201) {
+        if (!res.ok) {
           throw new Error("Can't update status!");
         }
         return res.json();
@@ -84,10 +101,12 @@ const Feed = () => {
     setIsEditing(true);
   };
 
-  const startEditPostHandler = postId => {
-    const loadedPost = { ...posts.find(p => p._id === postId) };
-    setIsEditing(true);
-    setEditPost(loadedPost);
+  const startEditPostHandler = (postId: string) => {
+    const loadedPost = posts.find(p => p._id === postId);
+    if (loadedPost) {
+      setIsEditing(true);
+      setEditPost(loadedPost);
+    }
   };
 
   const cancelEditHandler = () => {
@@ -95,27 +114,36 @@ const Feed = () => {
     setEditPost(null);
   };
 
-  const finishEditHandler = postData => {
+  const finishEditHandler = (postData: PostData) => {
     setEditLoading(true);
     let url = 'URL';
+    let method = 'POST';
     if (editPost) {
       url = 'URL';
+      method = 'PUT';
     }
 
-    fetch(url)
+    fetch(url, {
+      method: method,
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(postData)
+    })
       .then(res => {
-        if (res.status !== 200 && res.status !== 201) {
+        if (!res.ok) {
           throw new Error('Creating or editing a post failed!');
         }
         return res.json();
       })
       .then(resData => {
-        const post = {
+        const post: PostData = {
           _id: resData.post._id,
           title: resData.post.title,
           content: resData.post.content,
           creator: resData.post.creator,
-          createdAt: resData.post.createdAt
+          createdAt: resData.post.createdAt,
+          imageUrl: resData.post.imageUrl
         };
         setPosts(prevPosts => {
           let updatedPosts = [...prevPosts];
@@ -140,15 +168,17 @@ const Feed = () => {
       });
   };
 
-  const statusInputChangeHandler = (input, value) => {
-    setStatus(value);
+  const statusInputChangeHandler = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setStatus(event.target.value);
   };
 
-  const deletePostHandler = postId => {
+  const deletePostHandler = (postId: string) => {
     setPostsLoading(true);
-    fetch('URL')
+    fetch('URL', {
+      method: 'DELETE'
+    })
       .then(res => {
-        if (res.status !== 200 && res.status !== 201) {
+        if (!res.ok) {
           throw new Error('Deleting a post failed!');
         }
         return res.json();
@@ -168,7 +198,7 @@ const Feed = () => {
     setError(null);
   };
 
-  const catchError = error => {
+  const catchError = (error: Error) => {
     setError(error);
   };
 

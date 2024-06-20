@@ -2,11 +2,28 @@ import React, { useState } from 'react';
 
 import Input from '../../components/Form/Input/Input';
 import Button from '../../components/Button/Button';
-import { required, length, email } from '../../util/validators';
 import Auth from './Auth';
+import { AuthPageProps } from '../../components/types';
+import { email, required, length } from '../../util/validators';
 
-const Login = (props) => {
-  const [loginForm, setLoginForm] = useState({
+
+interface LoginFormState {
+  email: {
+    value: string;
+    valid: boolean;
+    touched: boolean;
+    validators: ((value: string) => boolean)[];
+  };
+  password: {
+    value: string;
+    valid: boolean;
+    touched: boolean;
+    validators: ((value: string) => boolean)[];
+  };
+}
+
+const Login: React.FC<Partial<AuthPageProps>> = (props) => {
+  const [loginForm, setLoginForm] = useState<LoginFormState>({
     email: {
       value: '',
       valid: false,
@@ -22,7 +39,7 @@ const Login = (props) => {
   });
   const [formIsValid, setFormIsValid] = useState(false);
 
-  const inputChangeHandler = (input, value) => {
+  const inputChangeHandler = (input: keyof LoginFormState, value: string) => {
     let isValid = true;
     for (const validator of loginForm[input].validators) {
       isValid = isValid && validator(value);
@@ -43,7 +60,7 @@ const Login = (props) => {
     setFormIsValid(formValidity);
   };
 
-  const inputBlurHandler = (input) => {
+  const inputBlurHandler = (input: keyof LoginFormState) => {
     setLoginForm(prevForm => ({
       ...prevForm,
       [input]: {
@@ -57,7 +74,7 @@ const Login = (props) => {
     <Auth>
       <form
         onSubmit={e =>
-          props.onLogin(e, {
+          props.onSignup && props.onLogin!(e, {
             email: loginForm.email.value,
             password: loginForm.password.value
           })
