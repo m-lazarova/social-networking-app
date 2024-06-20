@@ -2,14 +2,17 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 
 import './NavigationItems.css';
+import { NavItemsProps, Navigation } from '../../types';
 
-const navItems = [
+const navItems: NavItemsProps[] = [
   { id: 'feed', text: 'Feed', link: '/', auth: true },
   { id: 'login', text: 'Login', link: '/', auth: false },
   { id: 'signup', text: 'Signup', link: '/signup', auth: false }
 ];
 
-const NavigationItems = ({ isAuth, mobile, onChoose, onLogout }) => {
+
+
+const NavigationItems: React.FC<Partial<Navigation>> = ({ isAuth, mobile, onChoose, onLogout }) => {
   return (
     <ul className="navigation-items">
       {navItems

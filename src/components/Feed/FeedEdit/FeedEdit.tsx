@@ -8,7 +8,41 @@ import Image from '../../Image/Image';
 import { required, length } from '../../../util/validators';
 import { generateBase64FromImage } from '../../../util/image';
 
-const POST_FORM = {
+type ValidatorFn = (value: string) => boolean;
+
+type FieldProps = {
+  value: string;
+  valid: boolean;
+  touched: boolean;
+  validators: ValidatorFn[]
+}
+
+type PostFormProps = {
+  title: FieldProps;
+  image: FieldProps;
+  content: FieldProps;
+}
+
+type PostData = {
+  _id: string;
+  title: string;
+  creator: {
+    name: string;
+  };
+  createdAt: string;
+  content: string;
+  imageUrl: string;
+};
+
+type FeedEditProps = {
+  editing: boolean;
+  selectedPost: PostData | null; 
+  loading: boolean;
+  onCancelEdit: () => void;
+  onFinishEdit: (postData: PostData) => void;
+};
+
+const POST_FORM: PostFormProps = {
   title: {
     value: '',
     valid: false,
@@ -29,7 +63,7 @@ const POST_FORM = {
   }
 };
 
-const FeedEdit = (props) => {
+const FeedEdit: React.FC<FeedEditProps> = (props) => {
   const [postForm, setPostForm] = useState(POST_FORM);
   const [formIsValid, setFormIsValid] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
@@ -39,10 +73,10 @@ const FeedEdit = (props) => {
       props.editing &&
       props.selectedPost &&
       (props.selectedPost.title !== postForm.title.value ||
-        props.selectedPost.imagePath !== postForm.image.value ||
+        props.selectedPost.imageUrl !== postForm.image.value ||
         props.selectedPost.content !== postForm.content.value)
     ) {
-      const postForm = {
+      const updatedPostForm = {
         title: {
           ...postForm.title,
           value: props.selectedPost.title,
@@ -50,7 +84,7 @@ const FeedEdit = (props) => {
         },
         image: {
           ...postForm.image,
-          value: props.selectedPost.imagePath,
+          value: props.selectedPost.imageUrl,
           valid: true
         },
         content: {
@@ -59,27 +93,32 @@ const FeedEdit = (props) => {
           valid: true
         }
       };
-      setPostForm(postForm);
+      setPostForm(updatedPostForm);
       setFormIsValid(true);
     }
   }, [props.editing, props.selectedPost]);
 
-  const postInputChangeHandler = (input, value, files) => {
+  const postInputChangeHandler = (
+    input: keyof PostFormProps, 
+    value: string,
+    files?: FileList | null
+  ) => {
     if (files) {
       generateBase64FromImage(files[0])
         .then(b64 => {
-          setImagePreview(b64);
+          setImagePreview(b64 as unknown as any);
         })
         .catch(e => {
           setImagePreview(null);
         });
     }
+
     setPostForm(prevPostForm => {
       let isValid = true;
       for (const validator of prevPostForm[input].validators) {
         isValid = isValid && validator(value);
       }
-      const updatedForm = {
+      const updatedForm: PostFormProps = {
         ...prevPostForm,
         [input]: {
           ...prevPostForm[input],
@@ -89,16 +128,17 @@ const FeedEdit = (props) => {
       };
       let formIsValid = true;
       for (const inputName in updatedForm) {
-        formIsValid = formIsValid && updatedForm[inputName].valid;
+        formIsValid = formIsValid && updatedForm[inputName as keyof PostFormProps].valid;
       }
       return {
         ...updatedForm
       };
     });
+
     setFormIsValid(Object.values(postForm).every(field => field.valid));
   };
 
-  const inputBlurHandler = input => {
+  const inputBlurHandler = (input: keyof PostFormProps) => {
     setPostForm(prevPostForm => ({
       ...prevPostForm,
       [input]: {
@@ -115,10 +155,13 @@ const FeedEdit = (props) => {
   };
 
   const acceptPostChangeHandler = () => {
-    const post = {
+    const post: PostData = {
+      _id: props.selectedPost ? props.selectedPost._id : '',
       title: postForm.title.value,
-      image: postForm.image.value,
-      content: postForm.content.value
+      imageUrl: postForm.image.value,
+      content: postForm.content.value,
+      creator: { name: '' },
+      createdAt: ''
     };
     props.onFinishEdit(post);
     setPostForm(POST_FORM);

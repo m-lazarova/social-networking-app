@@ -2,11 +2,33 @@ import React, { useState } from 'react';
 
 import Input from '../../components/Form/Input/Input';
 import Button from '../../components/Button/Button';
-import { required, length, email } from '../../util/validators';
 import Auth from './Auth';
+import { AuthPageProps } from '../../components/types';
+import { required, length, email } from '../../util/validators';
 
-const Signup = (props) => {
-  const [signupForm, setSignupForm] = useState({
+interface SignupFormState {
+  email: {
+    value: string;
+    valid: boolean;
+    touched: boolean;
+    validators: ((value: string) => boolean)[];
+  };
+  password: {
+    value: string;
+    valid: boolean;
+    touched: boolean;
+    validators: ((value: string) => boolean)[];
+  };
+  name: {
+    value: string;
+    valid: boolean;
+    touched: boolean;
+    validators: ((value: string) => boolean)[];
+  };
+}
+
+const Signup: React.FC<Partial<AuthPageProps>> = (props) => {
+  const [signupForm, setSignupForm] = useState<SignupFormState>({
     email: {
       value: '',
       valid: false,
@@ -28,7 +50,7 @@ const Signup = (props) => {
   });
   const [formIsValid, setFormIsValid] = useState(false);
 
-  const inputChangeHandler = (input, value) => {
+  const inputChangeHandler = (input: keyof SignupFormState, value: string) => {
     let isValid = true;
     for (const validator of signupForm[input].validators) {
       isValid = isValid && validator(value);
@@ -49,7 +71,7 @@ const Signup = (props) => {
     setFormIsValid(formValidity);
   };
 
-  const inputBlurHandler = (input) => {
+  const inputBlurHandler = (input: keyof SignupFormState) => {
     setSignupForm(prevForm => ({
       ...prevForm,
       [input]: {
@@ -61,7 +83,7 @@ const Signup = (props) => {
 
   return (
     <Auth>
-      <form onSubmit={e => props.onSignup(e, { signupForm, formIsValid })}>
+      { props.onSignup && <form onSubmit={e => props.onSignup!(e, signupForm)}>
         <Input
           id="email"
           label="Your E-Mail"
@@ -98,7 +120,7 @@ const Signup = (props) => {
         <Button design="raised" type="submit" loading={props.loading}>
           Signup
         </Button>
-      </form>
+      </form>}
     </Auth>
   );
 };

@@ -13,15 +13,18 @@ import LoginPage from './pages/Auth/Login';
 import SignupPage from './pages/Auth/Signup';
 import './App.css';
 
+
 const App = () => {
-    const [showBackdrop, setShowBackdrop] = useState(false);
-    const [showMobileNav, setShowMobileNav] = useState(false);
-    const [isAuth, setIsAuth] = useState(true);
-    const [token, setToken] = useState(null);
-    const [userId, setUserId] = useState(null);
-    const [authLoading, setAuthLoading] = useState(false);
-    const [error, setError] = useState(false);
+    const [showBackdrop, setShowBackdrop] = useState<boolean>(false);
+    const [showMobileNav, setShowMobileNav] = useState<boolean>(false);
+    const [isAuth, setIsAuth] = useState<boolean>(true);
+    const [token, setToken] = useState<string | null>(null);
+    const [userId, setUserId] = useState<string | null>(null);
+    const [authLoading, setAuthLoading] = useState<boolean | null>(null);
+    const [error, setError] = useState<Error | null>(null);
     const navigate = useNavigate();
+
+
 
     useEffect(() => {
         const token = localStorage.getItem('token');
@@ -38,19 +41,19 @@ const App = () => {
         setIsAuth(true);
         setToken(token);
         setUserId(userId);
-        setAuthLoading(remainingMilliseconds);
+        setAutoLogout(remainingMilliseconds);
     }, []);
 
-    const mobileNavHandler = (isOpen) => {
+    const mobileNavHandler = (isOpen: boolean) => {
         setShowMobileNav(isOpen);
         setShowBackdrop(isOpen);
-    }
+    };
 
     const backdropClickHandler = () => {
         setShowBackdrop(false);
         setShowMobileNav(false);
         setError(null);
-    }
+    };
 
     const logoutHandler = () => {
         setIsAuth(false);
@@ -58,9 +61,9 @@ const App = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('expiryDate');
         localStorage.removeItem('userId');
-    }
+    };
 
-    const loginHandler = (event, authData) => {
+    const loginHandler = (event: React.FormEvent, authData: any) => {
         event.preventDefault();
         setAuthLoading(true);
         fetch('URL')
@@ -95,9 +98,9 @@ const App = () => {
                 setAuthLoading(false);
                 setError(err);
             });
-    }
+    };
 
-    const signupHandler = (event, authData) => {
+    const signupHandler = (event: React.FormEvent, authData: any) => {
         event.preventDefault();
         setAuthLoading(true);
         fetch('URL')
@@ -122,7 +125,7 @@ const App = () => {
             });
     };
 
-    const setAutoLogout = (milliseconds) => {
+    const setAutoLogout = (milliseconds: number) => {
         setTimeout(() => {
             logoutHandler();
         }, milliseconds);
@@ -149,7 +152,7 @@ const App = () => {
     if (isAuth) {
         routes = (
             <Routes>
-                <Route path="/" element={<FeedPage userId={userId} token={token} />} />
+                <Route path="/" element={<FeedPage />} />
                 <Route path="/:postId" element={<SinglePostPage userId={userId} token={token} />} />
                 <Route path="*" element={<Navigate to="/" />} />
             </Routes>
@@ -174,7 +177,7 @@ const App = () => {
                     <MobileNavigation
                         open={showMobileNav}
                         mobile
-                        onChooseItem={() => mobileNavHandler(false)}
+                        onChoose={() => mobileNavHandler(false)}
                         onLogout={logoutHandler}
                         isAuth={isAuth}
                     />
@@ -185,8 +188,4 @@ const App = () => {
     );
 };
 
-export default function AppWrapper() {
-    return <App />
-
-
-}
+export default App;
