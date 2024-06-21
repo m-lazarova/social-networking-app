@@ -116,10 +116,10 @@ const Feed = (props) => {
 
   const finishEditHandler = (postData: PostData) => {
     setEditLoading(true);
-    let url = 'URL';
+    let url = 'http://localhost:8080/feed/post';
     let method = 'POST';
     if (editPost) {
-      url = 'URL';
+      url = 'http://localhost:8080/feed/post';
       method = 'PUT';
     }
 
@@ -128,7 +128,10 @@ const Feed = (props) => {
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(postData)
+      body: JSON.stringify({
+        title: postData.title,
+        content: postData.content,
+      })
     })
       .then(res => {
         if (!res.ok) {
